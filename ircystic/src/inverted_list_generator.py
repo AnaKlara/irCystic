@@ -5,6 +5,9 @@ import os
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 from os import walk
+import csv
+
+import ircystic.src.indexer as indexer
 
 # LOG format Configurations
 FORMAT = '%(asctime)s %(levelname)s: %(message)s'
@@ -41,17 +44,18 @@ logging.basicConfig(filename=latest_file, level=logging.INFO, format=FORMAT, dat
     c. Cada linha representará uma palavra
     d. O primeiro campo de cada linha conterá a palavra em letras maiúsculas, sem acento
     e. O segundo campo de cada linha apresentará uma lista (Python) de identificadores de documentos onde a palavra aparece
-    f. Se uma palavra aparece mais de uma vez em um documento, o número do documento aparecerá o mesmo número de vezes na lista
+    f. Se uma palavra aparece mais de uma vez em um documento, o número do documento aparecerá mais de um vez na lista
     g. Exemplo de uma linha
         i. FIBROSIS ; [1,2,2,3,4,5,10,15,21,21,21]
 """
 def run(params = {}):
     logging.info('Initiating inverted list generator\n')
 
-    configFile = os.getcwd() + '\src\config\GLI.cfg'
+    configFile = os.getcwd() + '\ircystic\src\config\GLI.cfg'
     config = configparser.ConfigParser()
     config.read(configFile)
-    filesPathParam = config.get('PATH', 'LEIA')
+
+    filesPathParam = params['LEIA'] if 'LEIA' in params.keys() else config.get('DEFAULT', 'READ')
     filesPath = os.getcwd() + filesPathParam
     filenames = next(walk(filesPath), (None, None, []))[2]  # [] if no file
 
@@ -64,17 +68,28 @@ def run(params = {}):
         #print(len(tree.getroot()))
         for record in root.findall('RECORD'):
             recordNum = record.find("RECORDNUM").text
+            recordNum = recordNum.strip()
             try:
                 textContent = record.find("ABSTRACT").text
+                articles[recordNum] = textContent
             except:
                 try:
                     textContent = record.find("EXTRACT").text
+                    articles[recordNum] = textContent
                 except:
                     logging.warning(f"Was not possible to extract any content from this article: {recordNum}")
-            articles[recordNum] = textContent
+                    continue
 
+    wordFrequencyDict =  indexer.run(articles,params)
 
-    #print(articles)
+    outputFileParam =  params['ESCREVA'] if 'ESCREVA' in params.keys() else config.get('DEFAULT', 'WRITE')
+    outputFileParam = os.getcwd() + outputFileParam
+
+    with open(outputFileParam, 'w') as csvfile:
+        writer = csv.writer(csvfile,delimiter=';',lineterminator = '\n')
+        writer.writerow(['Word','Documents'])
+        for item in wordFrequencyDict.items():
+            writer.writerow(item)
     logging.info('Ending invert list generator\n')
 
 if __name__ == "__main__":

@@ -11,3 +11,8 @@ This project is a requirement for the Text Search and Mining course.
 The program follows the flowchart below:
 
 ![Worflow](https://user-images.githubusercontent.com/28203278/169043891-792b0185-10e0-4de7-90e9-31a5ec26b9bd.PNG)
+
+
+## Quick Start
+
+Clone repo and run `$ python -m ircystic` from the repository root. Outputs for each module are under `ircystic/src/output`.
