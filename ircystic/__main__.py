@@ -28,19 +28,19 @@ if __name__ == "__main__":
     config.read(configFile)
 
     params = dict()
-    params["USE_STEMMER"] = config.get('CUSTOMIZED_PARAMS', 'USE_STEMMER')
-    params['MIN_WORD_LENGTH'] = config.get('CUSTOMIZED_PARAMS', 'MIN_WORD_LENGTH')
-    params['ONLY_LETTERS'] = config.get('CUSTOMIZED_PARAMS', 'ONLY_LETTERS')
-    params['IGNORE_STOP_WORDS'] = config.get('CUSTOMIZED_PARAMS', 'IGNORE_STOP_WORDS')
+    params["USE_STEMMER"]         = config['CUSTOMIZED_PARAMS'].getboolean('USE_STEMMER')
+    params['MIN_WORD_LENGTH_3']   = config['CUSTOMIZED_PARAMS'].getboolean('MIN_WORD_LENGTH_3')
+    params['ONLY_LETTERS']        = config['CUSTOMIZED_PARAMS'].getboolean('ONLY_LETTERS')
+    params['IGNORE_STOP_WORDS']   = config['CUSTOMIZED_PARAMS'].getboolean('IGNORE_STOP_WORDS')
 
 
     # run modules
     start_time = time.time()
 
-    #inverted_list_generator(params)
-    #indexer()
-    query_processor()
-    search()
+    inverted_list_generator(params)
+    indexer()
+    query_processor(params)
+    #search()
 
     elapsed_time = time.time() - start_time
 
