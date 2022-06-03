@@ -37,8 +37,8 @@ if __name__ == "__main__":
     # run modules
     start_time = time.time()
 
-    inverted_list_generator(params)
-    indexer()
+    #inverted_list_generator(params)
+    #indexer()
     query_processor(params)
     #search()
 

@@ -32,22 +32,21 @@ def sentenceHandle(sentence, params):
     # remove punctuation
     sentence = sHandler.remove_punctutaion(sentence)
 
-    two_leters_or_more = params['MIN_WORD_LENGTH'] if 'MIN_WORD_LENGTH' in params.keys() else config.get('DEFAULT','MIN_WORD_LENGTH')
+    two_leters_or_more = params['MIN_WORD_LENGTH'] if 'MIN_WORD_LENGTH' in params.keys() else config['DEFAULT'].getboolean('MIN_WORD_LENGTH_3')
     if two_leters_or_more:
         sentence = sHandler.all_words_three_or_more(sentence)
 
-    only_letters = params['ONLY_LETTERS'] if 'ONLY_LETTERS' in params.keys() else config.get('DEFAULT', 'ONLY_LETTERS')
+    only_letters = params['ONLY_LETTERS'] if 'ONLY_LETTERS' in params.keys() else config['DEFAULT'].getboolean('ONLY_LETTERS')
     if only_letters:
         sentence = sHandler.remove_number_in_string(sentence)
 
-    ignore_stop_words = params['IGNORE_STOP_WORDS'] if 'IGNORE_STOP_WORDS' in params.keys() else config.get('DEFAULT','IGNORE_STOP_WORDS')
+    ignore_stop_words = params['IGNORE_STOP_WORDS'] if 'IGNORE_STOP_WORDS' in params.keys() else config['DEFAULT'].getboolean('IGNORE_STOP_WORDS')
     if ignore_stop_words:
         sentence = sHandler.remove_stop_word(sentence)
 
     use_stemmer = params['USE_STEMMER'] if 'USE_STEMMER' in params.keys() else config['DEFAULT'].getboolean('USE_STEMMER')
     if use_stemmer:
         sentence = sHandler.stemmer(sentence)
-    exit()
 
     return sentence
 
@@ -62,37 +61,23 @@ def write_csv_files(queriestDict):
     # output files
     processed_queries_file = os.getcwd() + config.get('PATH', 'CONSULTAS')
     expected_results_file = os.getcwd() + config.get('PATH', 'ESPERADOS')
-    #raw_queries_file = os.getcwd() + config.get('OutputFiles', 'RAW_QUERIES')
-    #tokenized_queries_file = os.getcwd() + config.get('OutputFiles', 'TOKENIZED_QUERIES')
 
     # writing output
-    expected_results_file_only_doc_ids = expected_results_file.replace('.csv', '_only_doc_ids.csv')
 
-    expected_results                   = open(expected_results_file, 'w')
-    query_vectors                      = open(processed_queries_file, 'w')
-    expected_results_only_doc_ids      = open(expected_results_file_only_doc_ids, 'w')
-    #raw_queries = open(os.getcwd() + '/' + raw_queries_file, 'w')
-    #tokenized_queries = open(os.getcwd() + '/' + tokenized_queries_file, 'w')
+    with open(processed_queries_file, "w") as outfile:
+        w = csv.writer(outfile, delimiter=";",lineterminator='\n')
 
-    w_expected_results                 = csv.writer(expected_results,delimiter=";",lineterminator='\n')
-    w_query_vectors                    = csv.writer(query_vectors,delimiter=";",lineterminator='\n')
-    w_expected_results_only_doc_ids    = csv.writer(expected_results_only_doc_ids,delimiter=";",lineterminator='\n')
-    #w_raw_queries                      = csv.writer(raw_queries,delimiter=";")
-    #w_tokenized_queries                = csv.writer(tokenized_queries,delimiter=";")
+        for key, val in queriestDict.items():
+            w.writerow([key, val["queryText"]])
 
-    for key,val in queriestDict.items():
-        #w_expected_results_only_doc_ids.writerow([key,map(lambda x: x[0],val['queryResults'])])
-        #w_expected_results.writerow([key,val['vector']])
-        w_query_vectors.writerow([key,val['queryText']])
-        #w_raw_queries.writerow([key,val['raw_text']])
-        #w_tokenized_queries.writerow([key,val['tokens']])
+    with open(expected_results_file, "w") as outfile:
+        w = csv.writer(outfile, delimiter=";",lineterminator='\n')
 
-    # must close these explicitly because i'm not using the 'with open(...) as outfile' construct
-    expected_results.close()
-    query_vectors.close()
-    expected_results_only_doc_ids.close()
-    #raw_queries.close()
-    #tokenized_queries.close()
+        for key, val in queriestDict.items():
+            for score,doc in val['queryResults'].items():
+                w.writerow([key,doc,score])
+
+
 
 def run(params={}):
 
@@ -112,28 +97,25 @@ def run(params={}):
 
         queryNumber = query.find("QueryNumber").text.strip()
 
-        try:
-            queryText = query.find("QueryText").text.strip()
-            queryText = sentenceHandle(queryText, params)
-            queryResultsQtd = query.find("Results").text.strip()
+        #try:
+        queryText = query.find("QueryText").text.strip()
+        queryText = sentenceHandle(queryText, params)
+        queryResultsQtd = query.find("Results").text.strip()
 
-            queryResults = OrderedDict()
+        queryResults = OrderedDict()
 
-            for item in query.find("Records").findall('Item'):
-                document = item.text.strip()
-                score = item.attrib['score'].strip()
-                queryResults[score]=document
+        for item in query.find("Records").findall('Item'):
+            document = item.text.strip()
+            score = item.attrib['score'].strip()
+            queryResults[score]=document
 
-            queriestDict[queryNumber] = {'queryText':queryText, 'queryResultsQtd':queryResultsQtd, 'queryResults ':queryResults }
+        queriestDict[queryNumber] = {'queryText':queryText, 'queryResultsQtd':queryResultsQtd, 'queryResults':queryResults }
 
-        except:
-            logging.warning(f"Was not possible to extract content from this query correctly: {queryNumber}")
-            continue
+        #except:
+            #logging.warning(f"Was not possible to extract content from this query correctly: {queryNumber}")
+            #continue
 
-    #write_csv_files(queriestDict)
-    for item in queriestDict.items():
-        print(item)
-        exit()
+    write_csv_files(queriestDict)
 
 
 if __name__ == "__main__":
