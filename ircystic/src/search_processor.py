@@ -1,3 +1,16 @@
+import logging
+import glob
+import os
+import configparser
+
+# LOG format Configurations
+FORMAT = '%(asctime)s %(levelname)s: %(message)s'
+DATEFMT = '%d %b %H:%M:%S'
+list_of_files = glob.glob('/log/*.log')  # * means all if need specific format
+latest_file = max(list_of_files, key=os.path.getctime)
+logging.basicConfig(filename=latest_file, level=logging.INFO, format=FORMAT, datefmt=DATEFMT, filemode="a")
+
+
 """
 O objetivo desse módulo é transformar o arquivo de consultas fornecido ao padrão de palavras que estamos
 utilizando.
@@ -41,3 +54,15 @@ utilizando.
             6. Essas contas devem ser feitas a partir dos campos Records, Item e do atributo Score de Item
                 a. Considerar qualquer coisa diferente de zero como um voto
 """
+
+configFile = os.getcwd() + '\ircystic\src\config\PC.cfg'
+config = configparser.ConfigParser()
+config.read(configFile)
+
+def run(params={}):
+    print("Search processor")
+
+if __name__ == "__main__":
+    logging.info("\nBegining search processor module run\n")
+    run()
+    logging.info("\nEnding search processor module run\n")

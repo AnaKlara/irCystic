@@ -9,17 +9,14 @@ import csv
 import toolz.dicttoolz as dictionaryTools
 from nltk.tokenize import word_tokenize
 
-
 import ircystic.src.shared.sentence_handler as sHandler
-
 
 # LOG format Configurations
 FORMAT = '%(asctime)s %(levelname)s: %(message)s'
 DATEFMT = '%d %b %H:%M:%S'
-list_of_files = glob.glob('/log/*.log') # * means all if need specific format
+list_of_files = glob.glob('/log/*.log')  # * means all if need specific format
 latest_file = max(list_of_files, key=os.path.getctime)
 logging.basicConfig(filename=latest_file, level=logging.INFO, format=FORMAT, datefmt=DATEFMT, filemode="a")
-
 
 # A função desse módulo é criar as listas invertidas simples.
 """
@@ -40,7 +37,7 @@ logging.basicConfig(filename=latest_file, level=logging.INFO, format=FORMAT, dat
 
 3) Só serão usados os campos RECORDNUM, que contém identificador do texto e ABSTRACT, que contém o texto a ser classificado
     a. Atenção: Se o registro não contiver o campo ABSTRACT deverá ser usado o campo EXTRACT
-    
+
 4) O Gerador Lista Invertida deverá gerar um arquivo
     a. O arquivo a ser gerado será indicado na instrução ESCREVA do arquivo de configuração
     b. O arquivo deverá ser no formato cvs
@@ -52,7 +49,9 @@ logging.basicConfig(filename=latest_file, level=logging.INFO, format=FORMAT, dat
     g. Exemplo de uma linha
         i. FIBROSIS ; [1,2,2,3,4,5,10,15,21,21,21]
 """
-def run(params = {}):
+
+
+def run(params={}):
     logging.info('Initiating inverted list generator\n')
 
     configFile = os.getcwd() + '\ircystic\src\config\GLI.cfg'
@@ -63,16 +62,16 @@ def run(params = {}):
     filesPath = os.getcwd() + filesPathParam
     filenames = next(walk(filesPath), (None, None, []))[2]  # [] if no file
 
-    outputFileParam =  params['ESCREVA'] if 'ESCREVA' in params.keys() else config.get('DEFAULT', 'WRITE')
+    outputFileParam = params['ESCREVA'] if 'ESCREVA' in params.keys() else config.get('DEFAULT', 'WRITE')
     outputFileParam = os.getcwd() + outputFileParam
 
-    recordContentDict  = OrderedDict()
+    recordContentDict = OrderedDict()
 
     for xmlFile in filenames:
         fullFileName = filesPath + xmlFile
         tree = ET.parse(fullFileName)
         root = tree.getroot()
-        #print(len(tree.getroot()))
+        # print(len(tree.getroot()))
         for record in root.findall('RECORD'):
             recordNum = record.find("RECORDNUM").text
             recordNum = recordNum.strip()
@@ -97,32 +96,32 @@ def run(params = {}):
     # remove punctuation
     recordContentDict = dictionaryTools.valmap(sHandler.remove_punctutaion, recordContentDict)
 
-    two_leters_or_more = params['MIN_WORD_LENGTH'] if 'MIN_WORD_LENGTH' in params.keys() else config.get('DEFAULT', 'MIN_WORD_LENGTH')
+    two_leters_or_more = params['MIN_WORD_LENGTH'] if 'MIN_WORD_LENGTH' in params.keys() else config.get('DEFAULT',
+                                                                                                         'MIN_WORD_LENGTH')
     if two_leters_or_more:
         recordContentDict = dictionaryTools.valmap(sHandler.all_words_three_or_more, recordContentDict)
 
     only_letters = params['ONLY_LETTERS'] if 'ONLY_LETTERS' in params.keys() else config.get('DEFAULT', 'ONLY_LETTERS')
-    if only_letters :
+    if only_letters:
         recordContentDict = dictionaryTools.valmap(sHandler.remove_number_in_string, recordContentDict)
 
-
-    ignore_stop_words = params['IGNORE_STOP_WORDS'] if 'IGNORE_STOP_WORDS' in params.keys() else config.get('DEFAULT', 'IGNORE_STOP_WORDS')
+    ignore_stop_words = params['IGNORE_STOP_WORDS'] if 'IGNORE_STOP_WORDS' in params.keys() else config.get('DEFAULT',
+                                                                                                            'IGNORE_STOP_WORDS')
     if ignore_stop_words:
-        recordContentDict =  dictionaryTools.valmap(sHandler.remove_stop_word, recordContentDict)
-
+        recordContentDict = dictionaryTools.valmap(sHandler.remove_stop_word, recordContentDict)
 
     # Transform words to UPPERCASE
     recordContentDict = dictionaryTools.valmap(sHandler.changing_cases, recordContentDict)
 
     recordContentDictTokenized = dictionaryTools.valmap(word_tokenize, recordContentDict)
 
-    #print("\n\n\n Example: \n")
-    #print(recordContentDictTokenized['01238'])
-    #print("\n\n\n\n\n")
+    # print("\n\n\n Example: \n")
+    # print(recordContentDictTokenized['01238'])
+    # print("\n\n\n\n\n")
 
-    #use_stemmer = filesPathParam = params['USE_STEMMER'] if 'USE_STEMMER' in params.keys() else config.get('DEFAULT', 'USE_STEMMER')
-    #if use_stemmer:
-        #recordContentDictTokenized
+    # use_stemmer = filesPathParam = params['USE_STEMMER'] if 'USE_STEMMER' in params.keys() else config.get('DEFAULT', 'USE_STEMMER')
+    # if use_stemmer:
+    # recordContentDictTokenized
 
     all_words = []
     for key, token_list in recordContentDictTokenized.items():
@@ -131,23 +130,23 @@ def run(params = {}):
     # catch unique values
     all_words = list(set(all_words))
 
-    wordFrequencyDict  = OrderedDict()
+    wordFrequencyDict = OrderedDict()
     for word in all_words:
-        #print(f"Searching for the word: {word}")
+        # print(f"Searching for the word: {word}")
         for key, token_list in recordContentDictTokenized.items():
             if token_list.count(word) != 0:
-                if not word in wordFrequencyDict .keys():
-                    wordFrequencyDict [word] = []
+                if not word in wordFrequencyDict.keys():
+                    wordFrequencyDict[word] = []
                 for i in range(token_list.count(word)):
-                    wordFrequencyDict [word].append(key)
-
+                    wordFrequencyDict[word].append(key)
 
     with open(outputFileParam, 'w') as csvfile:
-        writer = csv.writer(csvfile,delimiter=';',lineterminator = '\n')
-        writer.writerow(['Word','Documents'])
+        writer = csv.writer(csvfile, delimiter=';', lineterminator='\n')
+        writer.writerow(['Word', 'Documents'])
         for item in wordFrequencyDict.items():
             writer.writerow(item)
     logging.info('Ending invert list generator\n')
+
 
 if __name__ == "__main__":
     run()
