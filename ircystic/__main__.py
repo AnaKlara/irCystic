@@ -3,11 +3,14 @@ import logging
 import time
 from datetime import datetime
 from datetime import timedelta
+import os
+
 
 from ircystic.src.inverted_list_generator import run as inverted_list_generator
-#from ircystic.src.search-processor import run as run_query_processor
-#from ircystic.src.search import run as run_search
-import os
+from ircystic.src.indexer import run as indexer
+#from ircystic.src.search-processor import run as query_processor
+#from ircystic.src.search import run as search
+
 
 FORMAT = '%(asctime)s %(levelname)s: %(message)s'
 DATEFMT = '%d %b %H:%M:%S'
@@ -23,7 +26,6 @@ if __name__ == "__main__":
     configFile = os.getcwd() + '\ircystic\init.cfg'
     config = configparser.ConfigParser()
     config.read(configFile)
-    #print(config.sections())
 
     params = dict()
     params["USE_STEMMER"] = config.get('CUSTOMIZED_PARAMS', 'USE_STEMMER')
@@ -32,12 +34,13 @@ if __name__ == "__main__":
     params['IGNORE_STOP_WORDS'] = config.get('CUSTOMIZED_PARAMS', 'IGNORE_STOP_WORDS')
 
 
-    # run sub modules
+    # run modules
     start_time = time.time()
 
-    inverted_list_generator(params)
-    # run_query_processor()
-    # run_search()
+    #inverted_list_generator(params)
+    indexer()
+    #query_processor()
+    #search()
 
     elapsed_time = time.time() - start_time
 

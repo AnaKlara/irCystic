@@ -1,6 +1,7 @@
 import re
 import string
 
+
 def all_words_three_or_more(sentence):
     shortword = re.compile(r'\W*\b\w{1,3}\b')
     return shortword.sub('', sentence)

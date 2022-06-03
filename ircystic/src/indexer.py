@@ -1,12 +1,10 @@
 import logging
 import glob
-from collections import OrderedDict
 import os
 import configparser
-import toolz.dicttoolz as dictionaryTools
-import ircystic.src.shared.sentence_handler as sHandler
 import nltk
 nltk.download('punkt')
+
 from nltk.tokenize import word_tokenize
 import ircystic.src.shared.porterStemmer as PorterStemmer
 
@@ -40,66 +38,23 @@ logging.basicConfig(filename=latest_file, level=logging.INFO, format=FORMAT, dat
 
 3) O sistema deverá salvar toda essa estrutura do Modelo Vetorial para utilização posterior
 """
+# configFileGLI = os.getcwd() + '\ircystic\src\config\GLI.cfg'
+# configGLI = configparser.ConfigParser()
+# configGLI.read(configFileGLI)
+#
+# gliFile = os.getcwd() + configGLI.get('DEFAULT', 'WRITE')
+
+configFile = os.getcwd() + '\ircystic\src\config\INDEX.cfg'
+config = configparser.ConfigParser()
+config.read(configFile)
+
+def run(params={}):
+
+    #logging.info("\nInitiating indexer\n")
 
 
-def run(recordContentDict, params={}):
-
-    logging.info("\nInitiating indexer\n")
-    configFile = os.getcwd() + '\ircystic\src\config\INDEX.cfg'
-    config = configparser.ConfigParser()
-    config.read(configFile)
-
-    # Remove Line break
-    recordContentDict = dictionaryTools.valmap(sHandler.remove_line_break_in_string, recordContentDict)
-
-    # remove punctuation
-    recordContentDict = dictionaryTools.valmap(sHandler.remove_punctutaion, recordContentDict)
-
-    two_leters_or_more = params['MIN_WORD_LENGTH'] if 'MIN_WORD_LENGTH' in params.keys() else config.get('DEFAULT', 'MIN_WORD_LENGTH')
-    if two_leters_or_more:
-        recordContentDict = dictionaryTools.valmap(sHandler.all_words_three_or_more, recordContentDict)
-
-    only_letters = params['ONLY_LETTERS'] if 'ONLY_LETTERS' in params.keys() else config.get('DEFAULT', 'ONLY_LETTERS')
-    if only_letters :
-        recordContentDict = dictionaryTools.valmap(sHandler.remove_number_in_string, recordContentDict)
-
-
-    ignore_stop_words = params['IGNORE_STOP_WORDS'] if 'IGNORE_STOP_WORDS' in params.keys() else config.get('DEFAULT', 'IGNORE_STOP_WORDS')
-    if ignore_stop_words:
-        recordContentDict =  dictionaryTools.valmap(sHandler.remove_stop_word, recordContentDict)
-
-
-    # Transform words to UPPERCASE
-    recordContentDict = dictionaryTools.valmap(sHandler.changing_cases, recordContentDict)
-
-    recordContentDictTokenized = dictionaryTools.valmap(word_tokenize, recordContentDict)
-
-    #print("\n\n\n Example: \n")
-    #print(recordContentDictTokenized['01238'])
-    #print("\n\n\n\n\n")
-
-    use_stemmer = filesPathParam = params['USE_STEMMER'] if 'USE_STEMMER' in params.keys() else config.get('DEFAULT', 'USE_STEMMER')
-
-    all_words = []
-    for key, token_list in recordContentDictTokenized.items():
-        all_words += token_list
-
-    # catch unique values
-    all_words = list(set(all_words))
-
-    index = OrderedDict()
-    for word in all_words:
-        #print(f"Searching for the word: {word}")
-        for key, token_list in recordContentDictTokenized.items():
-            if token_list.count(word) != 0:
-                if not word in index.keys():
-                    index[word] = []
-                for i in range(token_list.count(word)):
-                    index[word].append(key)
-
-
-    logging.info("\nEnding indexer\n")
-    return (index)
+    #logging.info("\nEnding indexer\n")
+    return
 
 
 if __name__ == "__main__":
