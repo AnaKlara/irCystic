@@ -52,7 +52,7 @@ def run(params={}):
         for row in reader:
             doc_id = int(row[0])
             token_vector = row[1].lstrip('[').rstrip(']').split(',')
-            docs_dict[doc_id] = np.asarray(map(float, token_vector))
+            docs_dict[doc_id] = np.asarray(list(map(float, token_vector)))
 
     # loading queries
     consultasFile = os.getcwd() + config.get('PATH', 'CONSULTAS_VECTOR')
@@ -64,49 +64,49 @@ def run(params={}):
             token_vector = row[1].lstrip('[').rstrip(']').split(',')
             queries_dict[query_id] = np.asarray(list(map(float, token_vector)))
 
-    # calculating results
-    # one result line per query
-    for query_id, query_vector in queries_dict.items():
-        results_row = list()
-        results_row.append(query_id)
-
-        doc_distance_pairs = list()
-
-        for doc_id, doc_vector in docs_dict.items():
-            distance = cosine_distance(query_vector, doc_vector)
-            doc_distance_pairs.append([doc_id, distance])
-
-            # this is the way data will be written to the csv file
-        position_doc_distance_triples = list()
-
-        sorted_doc_distance_pairs = sorted(doc_distance_pairs, key=lambda elem: elem[1])
-
-        for i, pair in enumerate(sorted_doc_distance_pairs, start=1):
-            doc_id = pair[0]
-            distance = pair[1]
-
-            # 1-indexed
-            position = i
-
-            if (float(distance) == 1.0):
-                continue
-
-            position_doc_distance_triples.append([position, doc_id, round(distance, 3)])
-
-        # highest score first so we can compare more easily with the expect results
-        sorted_doc_distance_pairs = sorted(position_doc_distance_triples, key=lambda elem: elem[0])
-
-        results_row.append(position_doc_distance_triples)
-
-
-    # writing results
 
     with open(outputFileParam, 'w') as csvfile:
-        writer = csv.writer(csvfile, delimiter=';', lineterminator='\n')
-        writer.writerow(['idConsulta', 'Resultado'])
+        resultsWriter = csv.writer(csvfile, delimiter=';', lineterminator='\n')
+        resultsWriter.writerow(['idConsulta', 'Resultado'])
 
-        for item in results_row:
-            writer.writerow(item)
+        # calculating results
+        # one result line per query
+        for query_id, query_vector in queries_dict.items():
+            results_row = list()
+            results_row.append(query_id)
+
+            doc_distance_pairs = list()
+
+            for doc_id, doc_vector in docs_dict.items():
+
+                distance = cosine_distance(query_vector, doc_vector)
+                doc_distance_pairs.append([doc_id, distance])
+
+            # this is the way data will be written to the csv file
+            position_doc_distance_triples = list()
+
+            sorted_doc_distance_pairs = sorted(doc_distance_pairs, key=lambda elem: elem[1])
+
+            for i, pair in enumerate(sorted_doc_distance_pairs, start=1):
+                doc_id = pair[0]
+                distance = pair[1]
+
+                # 1-indexed
+                position = i
+
+                if (float(distance) == 1.0):
+                    continue
+
+                position_doc_distance_triples.append([position, doc_id, round(distance, 3)])
+                # writing results
+                # one result line per query
+                resultsWriter.writerow([query_id, [position, doc_id, round(distance, 3)]])
+
+            # highest score first so we can compare more easily with the expect results
+            sorted_doc_distance_pairs = sorted(position_doc_distance_triples, key=lambda elem: elem[0])
+
+            results_row.append(position_doc_distance_triples)
+
 
 
 if __name__ == "__main__":
