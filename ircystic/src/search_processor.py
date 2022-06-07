@@ -48,7 +48,22 @@ def sentenceHandle(sentence, params):
     if use_stemmer:
         sentence = sHandler.stemmer(sentence)
 
+    # to uppercase
+    sentence = sHandler.changing_cases(sentence)
+
     return sentence
+
+def build_querie_vector(querie,tokenSpace):
+
+    term_vector = list()
+
+    for token in tokenSpace:
+        if token in querie:
+            term_vector.append(float(1))
+        else:
+            term_vector.append(float(0))
+
+    return(term_vector)
 
 
 def write_csv_files(queriestDict):
@@ -61,6 +76,7 @@ def write_csv_files(queriestDict):
     # output files
     processed_queries_file = os.getcwd() + config.get('PATH', 'CONSULTAS')
     expected_results_file = os.getcwd() + config.get('PATH', 'ESPERADOS')
+    queries_vector =  os.getcwd() + config.get('PATH', 'CONSULTASFolder') + "querieVectors.csv"
 
     # writing output
 
@@ -77,16 +93,27 @@ def write_csv_files(queriestDict):
             for score,doc in val['queryResults'].items():
                 w.writerow([key,doc,score])
 
-
+    with open(queries_vector, "w") as outfile:
+        w = csv.writer(outfile, delimiter=";",lineterminator='\n')
+        for key, val in queriestDict.items():
+            w.writerow([key, val['queryVector']])
 
 def run(params={}):
 
     config = configparser.ConfigParser()
-
     configFile = os.getcwd() + '\ircystic\src\config\PC.cfg'
     config.read(configFile)
-
     queriesFiles = os.getcwd() + config.get('PATH', 'LEIA')
+
+    configFile = os.getcwd() + '\ircystic\src\config\GLI.cfg'
+    config = configparser.ConfigParser()
+    config.read(configFile)
+    inverted_index_file = os.getcwd() + config.get('DEFAULT','WRITE')
+    with open(inverted_index_file, 'r') as csvfile:
+        reader = csv.reader(csvfile, delimiter=';')
+        global_tokens = []
+        for row in reader:
+            global_tokens.append(row[0])
 
     tree = ET.parse(queriesFiles)
     root = tree.getroot()
@@ -97,23 +124,20 @@ def run(params={}):
 
         queryNumber = query.find("QueryNumber").text.strip()
 
-        #try:
         queryText = query.find("QueryText").text.strip()
         queryText = sentenceHandle(queryText, params)
         queryResultsQtd = query.find("Results").text.strip()
 
+        queryVector = build_querie_vector(queryText,global_tokens )
+
         queryResults = OrderedDict()
 
         for item in query.find("Records").findall('Item'):
-            document = item.text.strip()
-            score = item.attrib['score'].strip()
-            queryResults[score]=document
+            document            = item.text.strip()
+            score               = item.attrib['score'].strip()
+            queryResults[score] = document
 
-        queriestDict[queryNumber] = {'queryText':queryText, 'queryResultsQtd':queryResultsQtd, 'queryResults':queryResults }
-
-        #except:
-            #logging.warning(f"Was not possible to extract content from this query correctly: {queryNumber}")
-            #continue
+        queriestDict[queryNumber] = {'queryText':queryText, 'queryVector':queryVector, 'queryResultsQtd':queryResultsQtd, 'queryResults':queryResults }
 
     write_csv_files(queriestDict)
 

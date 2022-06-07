@@ -39,8 +39,8 @@ if __name__ == "__main__":
 
     #inverted_list_generator(params)
     #indexer()
-    query_processor(params)
-    #search()
+    #query_processor(params)
+    search()
 
     elapsed_time = time.time() - start_time
 
