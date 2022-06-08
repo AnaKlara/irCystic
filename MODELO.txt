@@ -1,6 +1,11 @@
-A estratégia de recuperação da informação para essa base de dados segue o modelo Espaço Vetorial. Ele está  processado e armazenado na pasta
+The information retrieval strategy for this database follows the Vector Space model.
+
+It is processed and stored at
+
 /irCystic/src/output/index.csv
 
-É possível fazer o carregamento e calcular qualquer consulta a partir dele.
+You can load and calculate any query from it.
 
-A configuração default segue as especificações detalhadas nos arquivos .cfg dentro da pasta /irCystic/src/config/
+The default configuration follows the specifications detailed in the .cfg files inside
+
+/irCystic/src/config/
