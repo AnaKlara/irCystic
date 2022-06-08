@@ -1,0 +1,6 @@
+A estratégia de recuperação da informação para essa base de dados segue o modelo Espaço Vetorial. Ele está  processado e armazenado na pasta
+/irCystic/src/output/index.csv
+
+É possível fazer o carregamento e calcular qualquer consulta a partir dele.
+
+A configuração default segue as especificações detalhadas nos arquivos .cfg dentro da pasta /irCystic/src/config/

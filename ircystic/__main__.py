@@ -37,9 +37,9 @@ if __name__ == "__main__":
     # run modules
     start_time = time.time()
 
-    #inverted_list_generator(params)
-    #indexer(params)
-    #query_processor(params)
+    inverted_list_generator(params)
+    indexer(params)
+    query_processor(params)
     search(params)
 
     elapsed_time = time.time() - start_time
